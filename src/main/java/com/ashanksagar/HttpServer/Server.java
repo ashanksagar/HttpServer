@@ -1,5 +1,7 @@
 package com.ashanksagar.HttpServer;
 
+import com.ashanksagar.HttpServer.Routing.HelloHandler;
+import com.ashanksagar.HttpServer.Routing.Router;
 import com.ashanksagar.HttpServer.config.Configuration;
 import com.ashanksagar.HttpServer.config.JsonConfigHandler;
 import com.ashanksagar.HttpServer.core.ServerListenerThread;
@@ -23,9 +25,12 @@ public class Server {
         LOGGER.info("Using Port: " + conf.getPort());
         LOGGER.info("Using WebRoot: " + conf.getWebroot());
 
+        Router router = new Router();
+        router.addRoute("/hello", new HelloHandler());
+
         ServerListenerThread serverListenerThread = null;
         try {
-            serverListenerThread = new ServerListenerThread(conf.getPort(), conf.getWebroot());
+            serverListenerThread = new ServerListenerThread(conf.getPort(), conf.getWebroot(), router);
             serverListenerThread.start();
         } catch (IOException e) {
             e.printStackTrace();

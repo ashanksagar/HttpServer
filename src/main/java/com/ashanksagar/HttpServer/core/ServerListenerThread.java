@@ -1,5 +1,6 @@
 package com.ashanksagar.HttpServer.core;
 
+import com.ashanksagar.HttpServer.Routing.Router;
 import org.slf4j.*;
 import java.io.*;
 import java.net.ServerSocket;
@@ -12,11 +13,13 @@ public class ServerListenerThread extends Thread {
     private int port;
     private String webRoot;
     private ServerSocket serverSocket;
+    private Router router;
 
-    public ServerListenerThread(int port, String webRoot) throws IOException {
+    public ServerListenerThread(int port, String webRoot, Router router) throws IOException {
         this.port = port;
         this.webRoot = webRoot;
         this.serverSocket = new ServerSocket(this.port);
+        this.router = router;
 
     }
 
@@ -31,7 +34,7 @@ public class ServerListenerThread extends Thread {
 
                 LOGGER.info("Connection Accepted: " + socket.getInetAddress());
 
-                HttpConnectionWorkerThread workerThread = new HttpConnectionWorkerThread(socket, webRoot);
+                HttpConnectionWorkerThread workerThread = new HttpConnectionWorkerThread(socket, webRoot, router);
                 workerThread.start();
             }
 

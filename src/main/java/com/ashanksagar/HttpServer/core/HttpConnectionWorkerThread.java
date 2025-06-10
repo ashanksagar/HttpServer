@@ -1,5 +1,7 @@
 package com.ashanksagar.HttpServer.core;
 
+import com.ashanksagar.HttpServer.Routing.HttpHandler;
+import com.ashanksagar.HttpServer.Routing.Router;
 import com.ashanksagar.HttpServer.core.io.ReadFileException;
 import com.ashanksagar.HttpServer.core.io.WebRootHandler;
 import com.ashanksagar.HttpServer.core.io.WebRootNotFoundException;
@@ -15,10 +17,12 @@ public class HttpConnectionWorkerThread extends Thread {
     private final static Logger LOGGER = LoggerFactory.getLogger(HttpConnectionWorkerThread.class);
     private final Socket socket;
     private final String webroot;
+    private Router router;
 
-    public HttpConnectionWorkerThread(Socket socket, String webroot) {
+    public HttpConnectionWorkerThread(Socket socket, String webroot, Router router) {
         this.socket = socket;
         this.webroot = webroot;
+        this.router = router;
     }
 
     @Override
@@ -39,9 +43,22 @@ public class HttpConnectionWorkerThread extends Thread {
             }
 
             String requestTarget = request.getRequestTarget();
+
+            // Check for route match
+            HttpHandler handler = router.resolve(requestTarget);
+            if (handler != null) {
+                HttpResponse response = handler.handle(request);
+                outputStream.write(response.getResponseBytes());
+                outputStream.flush();
+                LOGGER.info("Routed and served: {}", requestTarget);
+                return;
+            }
+
+            // Fall back to static file: add index.html if path ends with /
             if (requestTarget.equals("/")) {
                 requestTarget += "index.html";
             }
+
 
             // Step 2: Serve the file
             try {
