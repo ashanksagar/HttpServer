@@ -1,7 +1,6 @@
 package com.ashanksagar.HttpServer;
 
-import com.ashanksagar.HttpServer.Routing.HelloHandler;
-import com.ashanksagar.HttpServer.Routing.Router;
+import com.ashanksagar.HttpServer.Routing.*;
 import com.ashanksagar.HttpServer.config.Configuration;
 import com.ashanksagar.HttpServer.config.JsonConfigHandler;
 import com.ashanksagar.HttpServer.core.ServerListenerThread;
@@ -27,6 +26,10 @@ public class Server {
 
         Router router = new Router();
         router.addRoute("/hello", new HelloHandler());
+        router.addRoute("/echo", new EchoHandler());
+        router.addRoute("/upload", new UploadHandler());
+        router.addRoute("/register", new RegisterHandler());
+
 
         ServerListenerThread serverListenerThread = null;
         try {

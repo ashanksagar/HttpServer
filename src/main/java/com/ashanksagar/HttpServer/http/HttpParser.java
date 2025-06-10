@@ -133,6 +133,25 @@ public class HttpParser {
 
 
     private void parseBody(InputStreamReader reader, HttpRequest request) {
+        String contentLengthHeader = request.getHeader("content-length");
+        if (contentLengthHeader == null) return;
 
+        int contentLength;
+        try {
+            contentLength = Integer.parseInt(contentLengthHeader);
+        } catch (NumberFormatException e) {
+            return;
+        }
+
+        try {
+            char[] buffer = new char[contentLength];
+            int read = reader.read(buffer, 0, contentLength);
+            if (read > 0) {
+                byte[] bodyBytes = new String(buffer, 0, read).getBytes(StandardCharsets.UTF_8);
+                request.setMessageBody(bodyBytes);
+            }
+        } catch (IOException e) {
+        }
     }
+
 }
