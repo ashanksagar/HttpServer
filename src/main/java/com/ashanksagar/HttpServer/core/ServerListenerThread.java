@@ -5,6 +5,9 @@ import org.slf4j.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 
 public class ServerListenerThread extends Thread {
 
@@ -15,12 +18,15 @@ public class ServerListenerThread extends Thread {
     private ServerSocket serverSocket;
     private Router router;
 
+    private final ExecutorService threadPool;
+
+
     public ServerListenerThread(int port, String webRoot, Router router) throws IOException {
         this.port = port;
         this.webRoot = webRoot;
         this.serverSocket = new ServerSocket(this.port);
         this.router = router;
-
+        this.threadPool = Executors.newFixedThreadPool(10);
     }
 
 
@@ -35,7 +41,7 @@ public class ServerListenerThread extends Thread {
                 LOGGER.info("Connection Accepted: " + socket.getInetAddress());
 
                 HttpConnectionWorkerThread workerThread = new HttpConnectionWorkerThread(socket, webRoot, router);
-                workerThread.start();
+                threadPool.submit(workerThread);
             }
 
 
@@ -47,6 +53,8 @@ public class ServerListenerThread extends Thread {
                     serverSocket.close();
                 } catch (IOException e) {
                 }
+            } if (threadPool != null && !threadPool.isShutdown()) {
+                threadPool.shutdown();
             }
         }
     }
