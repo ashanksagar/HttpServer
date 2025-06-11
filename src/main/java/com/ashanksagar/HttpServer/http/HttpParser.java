@@ -118,18 +118,18 @@ public class HttpParser {
 
     private void processSingleHeaderField(StringBuilder processingDataBuffer, HttpRequest request) throws HttpParsingException {
         String rawHeaderField = processingDataBuffer.toString();
-        Pattern pattern = Pattern.compile("^(?<fieldName>[!#$%&’*+\\-./^_‘|˜\\dA-Za-z]+):\\s?(?<fieldValue>[!#$%&’*+\\-./^_‘|˜(),:;<=>?@[\\\\]{}\" \\dA-Za-z]+)\\s?$");
+        int colonIndex = rawHeaderField.indexOf(":");
 
-        Matcher matcher = pattern.matcher(rawHeaderField);
-        if (matcher.matches()) {
-            // We found a proper header
-            String fieldName = matcher.group("fieldName");
-            String fieldValue = matcher.group("fieldValue");
-            request.addHeader(fieldName, fieldValue);
-        } else{
+        if (colonIndex == -1) {
             throw new HttpParsingException(HttpStatusCodes.CLIENT_ERROR_400_BAD_REQUEST);
         }
+
+        String fieldName = rawHeaderField.substring(0, colonIndex).trim();
+        String fieldValue = rawHeaderField.substring(colonIndex + 1).trim();
+
+        request.addHeader(fieldName, fieldValue);
     }
+
 
 
     private void parseBody(InputStreamReader reader, HttpRequest request) {

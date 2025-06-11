@@ -15,6 +15,7 @@ public class UploadHandler implements HttpHandler {
                     .statusCode(HttpStatusCodes.CLIENT_ERROR_401_METHOD_NOT_ALLOWED)
                     .addHeader("Content-Type", "text/plain")
                     .addHeader("Content-Length", String.valueOf(msg.length()))
+                    .addHeader("Connection", "close")
                     .messageBody(msg.getBytes())
                     .build();
         }
@@ -30,6 +31,7 @@ public class UploadHandler implements HttpHandler {
                     .statusCode(HttpStatusCodes.SERVER_ERROR_500_INTERNAL_SERVER_ERROR)
                     .addHeader("Content-Type", "text/plain")
                     .addHeader("Content-Length", String.valueOf(error.length()))
+                    .addHeader("Connection", "close")
                     .messageBody(error.getBytes())
                     .build();
         }
@@ -40,6 +42,7 @@ public class UploadHandler implements HttpHandler {
                 .statusCode(HttpStatusCodes.SUCCESS_200_OK)
                 .addHeader("Content-Type", "text/plain")
                 .addHeader("Content-Length", String.valueOf(success.length()))
+                .addHeader("Connection", "close")
                 .messageBody(success.getBytes())
                 .build();
     }

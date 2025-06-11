@@ -26,7 +26,7 @@ public class ServerListenerThread extends Thread {
         this.webRoot = webRoot;
         this.serverSocket = new ServerSocket(this.port);
         this.router = router;
-        this.threadPool = Executors.newFixedThreadPool(10);
+        this.threadPool = Executors.newFixedThreadPool(20);
     }
 
 

@@ -19,6 +19,7 @@ public class RegisterHandler implements HttpHandler {
                     .statusCode(HttpStatusCodes.CLIENT_ERROR_401_METHOD_NOT_ALLOWED)
                     .addHeader("Content-Type", "text/plain")
                     .addHeader("Content-Length", String.valueOf(error.length()))
+                    .addHeader("Connection", "close")
                     .messageBody(error.getBytes())
                     .build();
         }
@@ -35,6 +36,7 @@ public class RegisterHandler implements HttpHandler {
                         .statusCode(HttpStatusCodes.CLIENT_ERROR_400_BAD_REQUEST)
                         .addHeader("Content-Type", "text/plain")
                         .addHeader("Content-Length", String.valueOf(msg.length()))
+                        .addHeader("Connection", "close")
                         .messageBody(msg.getBytes())
                         .build();
             }
@@ -49,6 +51,7 @@ public class RegisterHandler implements HttpHandler {
                     .statusCode(HttpStatusCodes.SUCCESS_200_OK)
                     .addHeader("Content-Type", "application/json")
                     .addHeader("Content-Length", String.valueOf(body.length))
+                    .addHeader("Connection", "close")
                     .messageBody(body)
                     .build();
 
@@ -59,6 +62,7 @@ public class RegisterHandler implements HttpHandler {
                     .statusCode(HttpStatusCodes.CLIENT_ERROR_400_BAD_REQUEST)
                     .addHeader("Content-Type", "text/plain")
                     .addHeader("Content-Length", String.valueOf(error.length()))
+                    .addHeader("Connection", "close")
                     .messageBody(error.getBytes())
                     .build();
         }

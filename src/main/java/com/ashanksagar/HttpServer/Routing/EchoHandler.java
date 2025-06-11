@@ -12,6 +12,7 @@ public class EchoHandler implements HttpHandler {
                     .statusCode(HttpStatusCodes.CLIENT_ERROR_401_METHOD_NOT_ALLOWED)
                     .addHeader("Content-Type", "text/plain")
                     .addHeader("Content-Length", String.valueOf(message.length()))
+                    .addHeader("Connection", "close")
                     .messageBody(message.getBytes())
                     .build();
         }
@@ -22,6 +23,7 @@ public class EchoHandler implements HttpHandler {
                 .statusCode(HttpStatusCodes.SUCCESS_200_OK)
                 .addHeader("Content-Type", "text/plain")
                 .addHeader("Content-Length", String.valueOf(requestBody.length))
+                .addHeader("Connection", "close")
                 .messageBody(requestBody)
                 .build();
     }
