@@ -24,11 +24,10 @@ public class ServerListenerThread extends Thread {
     public ServerListenerThread(int port, String webRoot, Router router) throws IOException {
         this.port = port;
         this.webRoot = webRoot;
-        this.serverSocket = new ServerSocket(this.port);
+        this.serverSocket = new ServerSocket(this.port, 1000); //Increased backlog for benchmark testing
         this.router = router;
-        this.threadPool = Executors.newFixedThreadPool(20);
+        this.threadPool = Executors.newFixedThreadPool(40);
     }
-
 
 
     @Override

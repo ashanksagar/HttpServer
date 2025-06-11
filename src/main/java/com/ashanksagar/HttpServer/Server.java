@@ -35,7 +35,8 @@ public class Server {
         try {
             serverListenerThread = new ServerListenerThread(conf.getPort(), conf.getWebroot(), router);
             serverListenerThread.start();
-        } catch (IOException e) {
+            serverListenerThread.join();
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
 

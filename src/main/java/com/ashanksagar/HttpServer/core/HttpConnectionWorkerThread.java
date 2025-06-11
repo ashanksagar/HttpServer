@@ -14,10 +14,10 @@ import java.io.*;
 import java.net.Socket;
 
 public class HttpConnectionWorkerThread extends Thread {
-    private final static Logger LOGGER = LoggerFactory.getLogger(HttpConnectionWorkerThread.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpConnectionWorkerThread.class);
     private final Socket socket;
     private final String webroot;
-    private Router router;
+    private final Router router;
 
     public HttpConnectionWorkerThread(Socket socket, String webroot, Router router) {
         this.socket = socket;
@@ -31,81 +31,77 @@ public class HttpConnectionWorkerThread extends Thread {
                 InputStream inputStream = socket.getInputStream();
                 OutputStream outputStream = socket.getOutputStream()
         ) {
-            // Step 1: Parse the request
             HttpParser parser = new HttpParser();
             HttpRequest request;
+
             try {
                 request = parser.parseHttpRequest(inputStream);
             } catch (HttpParsingException e) {
-                LOGGER.error("Failed to parse HTTP request", e);
-                sendSimpleResponse(outputStream, "400 Bad Request", "<h1>400 Bad Request</h1>");
+                LOGGER.warn("Bad HTTP request: {}", e.getMessage());
+                sendSimpleResponse(outputStream, "400 Bad Request", "400 Bad Request");
+                return;
+            } catch (Exception e) {
+                LOGGER.error("Unexpected parsing error", e);
+                sendSimpleResponse(outputStream, "500 Internal Server Error", "500 Internal Server Error");
                 return;
             }
 
-            String requestTarget = request.getRequestTarget();
+            String target = request.getRequestTarget();
+            if (target.equals("/")) target = "/index.html";
 
-            // Check for route match
-            HttpHandler handler = router.resolve(requestTarget);
-            if (handler != null) {
-                HttpResponse response = handler.handle(request);
-                outputStream.write(response.getResponseBytes());
-                outputStream.flush();
-                LOGGER.info("Routed and served: {}", requestTarget);
-                return;
-            }
-
-            // Fall back to static file: add index.html if path ends with /
-            if (requestTarget.equals("/")) {
-                requestTarget += "index.html";
-            }
-
-
-            // Step 2: Serve the file
             try {
-                WebRootHandler webRootHandler = new WebRootHandler(webroot);
-                byte[] content = webRootHandler.getFileByteArrayData(requestTarget);
-                String mimeType = webRootHandler.getFileMimeType(requestTarget);
+                HttpHandler handler = router.resolve(target);
+                if (handler != null) {
+                    HttpResponse response = handler.handle(request);
+                    outputStream.write(response.getResponseBytes());
+                    outputStream.flush();
+                    return;
+                }
+
+                WebRootHandler staticHandler = new WebRootHandler(webroot);
+                byte[] content = staticHandler.getFileByteArrayData(target);
+                String mimeType = staticHandler.getFileMimeType(target);
 
                 String header = "HTTP/1.1 200 OK\r\n" +
                         "Content-Type: " + mimeType + "\r\n" +
-                        "Content-Length: " + content.length + "\r\n" +
-                        "\r\n";
+                        "Content-Length: " + content.length + "\r\n\r\n";
 
                 outputStream.write(header.getBytes());
                 outputStream.write(content);
-                LOGGER.info("Served: {}", requestTarget);
+                outputStream.flush();
             } catch (FileNotFoundException e) {
-                sendSimpleResponse(outputStream, "404 Not Found", "<h1>404 Not Found</h1>");
-                LOGGER.warn("File not found: {}", requestTarget);
+                sendSimpleResponse(outputStream, "404 Not Found", "404 Not Found");
             } catch (ReadFileException | WebRootNotFoundException e) {
-                sendSimpleResponse(outputStream, "500 Internal Server Error", "<h1>500 Internal Server Error</h1>");
-                LOGGER.error("Error serving file", e);
+                LOGGER.error("Web root error", e);
+                sendSimpleResponse(outputStream, "500 Internal Server Error", "500 Internal Server Error");
+            } catch (Exception e) {
+                LOGGER.error("Fatal error during request handling", e);
+                sendSimpleResponse(outputStream, "500 Internal Server Error", "500 Internal Server Error");
             }
 
-            outputStream.flush();
-
         } catch (IOException e) {
-            LOGGER.error("Communication error", e);
+            LOGGER.error("Socket I/O failure", e);
         } finally {
             try {
                 socket.close();
             } catch (IOException e) {
-                LOGGER.error("Error closing socket", e);
+                LOGGER.warn("Socket close failed", e);
             }
         }
     }
 
-    private void sendSimpleResponse(OutputStream outputStream, String statusLine, String body) {
+    private void sendSimpleResponse(OutputStream outputStream, String status, String message) {
         try {
-            String response = "HTTP/1.1 " + statusLine + "\r\n" +
+            String body = "<h1>" + message + "</h1>";
+            String response = "HTTP/1.1 " + status + "\r\n" +
                     "Content-Type: text/html\r\n" +
                     "Content-Length: " + body.length() + "\r\n" +
-                    "\r\n" +
-                    body;
+                    "Connection: close\r\n\r\n" + body;
+
             outputStream.write(response.getBytes());
             outputStream.flush();
         } catch (IOException e) {
-            LOGGER.error("Failed to send response: {}", statusLine, e);
+            LOGGER.error("Failed to send error response", e);
         }
     }
 }
