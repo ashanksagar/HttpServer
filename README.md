@@ -36,5 +36,52 @@ Implements fundamental web server functionality — request parsing, routing, co
 
 ---
 
+## Architecture Overview
+
+
+
+### 1. Connection Layer
+- The server starts a `ServerSocket` that continuously listens for incoming TCP connections on a specified port (default: 8000).
+- Each new connection is handed off to a **fixed-size thread pool**, which ensures efficient resource use and prevents unbounded thread creation under load.
+
+### 2. Request Parsing
+- Each worker thread reads the raw HTTP request stream line-by-line.
+- The parser extracts:
+  - Request method (`GET`, `POST`, etc.)
+  - Target path and query parameters
+  - Headers and content length
+  - Request body (for POST/PUT)
+- The data is wrapped in a `HttpRequest` object for easy downstream use.
+
+### 3. Routing Layer
+- The parsed request is passed to a **Router**, which maps paths to specific handler classes.
+- The router supports dynamic route registration (e.g., `/upload`, `/echo`).
+- If no route matches, a `404 Not Found` response is returned automatically.
+
+### 4. Handler Execution
+- Each route implements an `HttpHandler` interface with a `handle(HttpRequest request)` method.
+- Handlers can:
+  - Return dynamic text or JSON responses  
+  - Read and write files  
+  - Process form or JSON POST bodies  
+
+### 5. Response Builder
+- The handler returns a `HttpResponse` object containing:
+  - Status line (e.g., `HTTP/1.1 200 OK`)
+  - Headers (e.g., `Content-Type`, `Content-Length`)
+  - Response body (string or byte array)
+
+### 6. Static File Engine
+- For `GET` requests targeting files, the static file engine:
+  - Locates the file in the server’s root directory
+  - Determines its MIME type
+  - Streams the file in buffered chunks to reduce memory overhead
+- Missing or restricted files trigger `403` or `404` responses automatically.
+
+### 7. Shutdown
+- On shutdown, all active threads complete their current requests.
+- The thread pool and sockets are closed cleanly
+
+
 
 
